@@ -1,5 +1,5 @@
 """
-Путь Игры — Backend сервер (всё в одном файле)
+Путь Игры — Backend сервер
 """
 
 from fastapi import FastAPI, HTTPException
@@ -71,187 +71,521 @@ HTML = """<!DOCTYPE html>
 <title>Путь Игры — Голос</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  *{margin:0;padding:0;box-sizing:border-box;}
-  :root{--accent:#e84020;--dark:#111111;--border:#e5e5e5;--bg:#f7f7f7;--surface:#ffffff;}
-  body{background:var(--bg);color:var(--dark);font-family:'Inter',sans-serif;font-weight:400;min-height:100vh;display:flex;flex-direction:column;align-items:center;}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: #141414;
+  color: #e8e8e8;
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
 
-  .app{width:100%;max-width:740px;min-height:100vh;background:var(--surface);display:flex;flex-direction:column;border-left:0.5px solid var(--border);border-right:0.5px solid var(--border);}
+/* SIDEBAR */
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: #0f0f0f;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+.sidebar-top {
+  padding: 28px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.logo-img { width: 54px; height: 54px; }
+.logo-img img { width: 100%; height: 100%; object-fit: contain; }
+.logo-name {
+  font-size: 13px; font-weight: 500; color: #fff;
+  letter-spacing: 0.12em; text-transform: uppercase;
+}
+.logo-name span { color: #e84020; }
+.logo-sub { font-size: 10px; color: rgba(255,255,255,0.22); letter-spacing: 0.07em; text-transform: uppercase; }
 
-  /* TOP BAR */
-  .top-bar{background:var(--dark);padding:28px 24px 22px;display:flex;flex-direction:column;align-items:center;gap:10px;}
-  .logo-img{width:60px;height:60px;display:flex;align-items:center;justify-content:center;}
-  .logo-img img{width:100%;height:100%;object-fit:contain;}
-  .logo-text{font-size:16px;font-weight:500;color:#fff;letter-spacing:0.12em;text-transform:uppercase;}
-  .logo-text span{color:var(--accent);}
-  .tagline{font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:0.08em;text-transform:uppercase;}
+.sidebar-section { padding: 16px 12px 8px; }
+.section-label {
+  font-size: 10px; color: rgba(255,255,255,0.18);
+  letter-spacing: 0.1em; text-transform: uppercase;
+  margin-bottom: 4px; padding: 0 8px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 8px;
+  cursor: pointer; transition: background 0.15s;
+  border: none; background: none; width: 100%; text-align: left;
+}
+.nav-item:hover { background: rgba(255,255,255,0.04); }
+.nav-item.active { background: rgba(232,64,32,0.12); }
+.nav-icon { width: 16px; height: 16px; flex-shrink: 0; }
+.nav-label { font-size: 13px; color: rgba(255,255,255,0.32); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nav-item.active .nav-label { color: #fff; }
 
-  /* MESSAGES */
-  #messages{flex:1;min-height:300px;max-height:58vh;overflow-y:auto;padding:20px 24px 8px;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
-  #messages::-webkit-scrollbar{width:3px;}
-  #messages::-webkit-scrollbar-thumb{background:var(--border);}
+.new-chat-btn {
+  margin: 8px 12px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  background: none;
+  color: rgba(255,255,255,0.4);
+  font-size: 12px;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  transition: all 0.15s; width: calc(100% - 24px);
+}
+.new-chat-btn:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.7); }
 
-  .msg-group{margin-bottom:18px;}
-  .msg-row{display:flex;gap:10px;align-items:flex-start;}
-  .msg-row.user{flex-direction:row-reverse;}
+.sidebar-bottom {
+  margin-top: auto;
+  padding: 14px 12px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.voice-row {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px; cursor: pointer;
+}
+.voice-label { font-size: 12px; color: rgba(255,255,255,0.32); }
+.voice-toggle.on .voice-label { color: #e84020; }
+.toggle-sw {
+  width: 30px; height: 17px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 9px; position: relative;
+  transition: background 0.3s;
+}
+.toggle-sw::after {
+  content: ''; position: absolute;
+  width: 11px; height: 11px; background: #fff;
+  border-radius: 50%; top: 3px; left: 3px;
+  transition: left 0.3s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+.voice-toggle.on .toggle-sw { background: #e84020; }
+.voice-toggle.on .toggle-sw::after { left: 16px; }
 
-  .avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:500;margin-top:2px;overflow:hidden;}
-  .avatar.ai{background:var(--dark);padding:5px;}
-  .avatar.ai img{width:100%;height:100%;object-fit:contain;}
-  .avatar.user{background:#f0f0f0;color:#888;letter-spacing:0.03em;}
+/* MAIN */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #1a1a1a;
+  overflow: hidden;
+}
 
-  .bubble{max-width:80%;padding:10px 14px;font-size:14px;line-height:1.7;}
-  .bubble.ai{background:#f5f5f5;color:var(--dark);border-radius:4px 14px 14px 14px;}
-  .bubble.user{background:var(--dark);color:#fff;border-radius:14px 4px 14px 14px;}
+.main-header {
+  padding: 18px 28px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.chat-title { font-size: 15px; font-weight: 500; color: #fff; }
+.chat-sub { font-size: 12px; color: rgba(255,255,255,0.28); margin-top: 2px; }
 
-  .quote-block{margin:6px 0 0 38px;padding:10px 14px;border-left:3px solid var(--accent);background:#fdf2f0;border-radius:0 8px 8px 0;font-size:13px;color:#666;font-style:italic;max-width:72%;}
+/* MESSAGES */
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.1) transparent;
+}
+#messages::-webkit-scrollbar { width: 4px; }
+#messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 
-  .audio-pill{display:flex;align-items:center;gap:8px;margin:6px 0 0 38px;background:#f5f5f5;border:0.5px solid var(--border);border-radius:999px;padding:6px 12px;max-width:220px;}
-  .play-btn{width:22px;height:22px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:none;cursor:pointer;transition:opacity 0.2s;}
-  .play-btn:hover{opacity:0.85;}
-  .play-btn:disabled{opacity:0.3;cursor:default;}
-  .play-btn svg{width:8px;height:8px;fill:#fff;margin-left:1px;}
-  .audio-bar{flex:1;height:2px;background:var(--border);border-radius:1px;cursor:pointer;}
-  .audio-bar-fill{height:100%;background:var(--accent);border-radius:1px;width:0%;transition:width 0.1s;}
-  .audio-label{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#999;min-width:55px;}
+.msg-group { display: flex; flex-direction: column; gap: 6px; animation: fadeUp 0.3s ease; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-  .divider{display:flex;align-items:center;gap:10px;margin:4px 0 16px;padding:0 24px;}
-  .divider span{font-size:11px;color:#bbb;white-space:nowrap;}
-  .divider::before,.divider::after{content:'';flex:1;height:0.5px;background:var(--border);}
+.msg-row { display: flex; gap: 12px; align-items: flex-start; }
+.msg-row.user { flex-direction: row-reverse; }
 
-  /* THINKING */
-  .thinking{display:flex;gap:10px;padding:10px 0;align-items:flex-start;}
-  .thinking-avatar{width:28px;height:28px;border-radius:50%;background:var(--dark);padding:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
-  .thinking-avatar img{width:100%;height:100%;object-fit:contain;}
-  .thinking-dots{display:flex;gap:5px;padding-top:8px;}
-  .thinking-dots span{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:pulse 1.4s infinite;opacity:0.3;}
-  .thinking-dots span:nth-child(2){animation-delay:0.2s;}
-  .thinking-dots span:nth-child(3){animation-delay:0.4s;}
-  @keyframes pulse{0%,80%,100%{opacity:0.2;transform:scale(0.8);}40%{opacity:1;transform:scale(1);}}
-  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
-  .msg-group{animation:fadeIn 0.35s ease;}
+.av {
+  width: 30px; height: 30px; border-radius: 50%;
+  flex-shrink: 0; display: flex; align-items: center;
+  justify-content: center; font-size: 9px; font-weight: 500;
+  overflow: hidden; margin-top: 2px;
+}
+.av.ai { background: #000; padding: 5px; }
+.av.ai img { width: 100%; height: 100%; object-fit: contain; }
+.av.user { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.4); letter-spacing: 0.03em; }
 
-  /* INPUT */
-  .input-area{padding:12px 16px 20px;border-top:0.5px solid var(--border);background:var(--surface);}
-  .voice-row{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-bottom:8px;}
-  .voice-label{font-size:12px;color:#888;}
-  .toggle-sw{width:32px;height:18px;background:#ddd;border-radius:9px;position:relative;transition:background 0.3s;cursor:pointer;}
-  .toggle-sw::after{content:'';position:absolute;width:12px;height:12px;background:#fff;border-radius:50%;top:3px;left:3px;transition:all 0.3s;box-shadow:0 1px 2px rgba(0,0,0,0.2);}
-  .voice-toggle.on .toggle-sw{background:var(--accent);}
-  .voice-toggle.on .toggle-sw::after{left:17px;}
-  .voice-toggle.on .voice-label{color:var(--accent);}
-  .voice-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;}
+.bub {
+  max-width: 70%; padding: 11px 15px;
+  font-size: 14px; line-height: 1.75;
+}
+.bub.ai {
+  background: #252525; color: #e0e0e0;
+  border-radius: 4px 12px 12px 12px;
+}
+.bub.user {
+  background: #e84020; color: #fff;
+  border-radius: 12px 4px 12px 12px;
+}
 
-  .input-box{display:flex;border:0.5px solid #ddd;border-radius:14px;background:#f5f5f5;overflow:hidden;align-items:flex-end;transition:border-color 0.2s;}
-  .input-box:focus-within{border-color:var(--accent);}
-  textarea{flex:1;border:none;background:none;padding:12px 16px;font-size:14px;font-family:'Inter',sans-serif;color:var(--dark);resize:none;outline:none;min-height:46px;max-height:140px;line-height:1.5;}
-  textarea::placeholder{color:#bbb;}
-  .send-btn{width:34px;height:34px;margin:6px;border-radius:10px;background:var(--dark);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s;flex-shrink:0;}
-  .send-btn:hover{background:var(--accent);}
-  .send-btn:disabled{opacity:0.3;cursor:default;}
-  .send-btn svg{width:14px;height:14px;}
-  .hint{font-size:11px;color:#bbb;text-align:center;margin-top:8px;}
+.quote-block {
+  margin-left: 42px;
+  padding: 10px 14px;
+  border-left: 3px solid #e84020;
+  background: rgba(232,64,32,0.07);
+  border-radius: 0 8px 8px 0;
+  font-size: 13px; color: rgba(255,255,255,0.4);
+  font-style: italic; max-width: calc(70% + 0px);
+}
 
-  #statusBar{font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#bbb;text-align:center;padding:6px 24px;min-height:26px;}
-  #statusBar.error{color:var(--accent);}
-  #statusBar.ok{color:#2e9e5b;}
+.audio-pill {
+  display: flex; align-items: center; gap: 8px;
+  margin-left: 42px;
+  background: #252525;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 999px;
+  padding: 5px 12px; width: 200px;
+}
+.play-btn {
+  width: 22px; height: 22px;
+  background: #e84020; border-radius: 50%;
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: opacity 0.2s;
+}
+.play-btn:hover { opacity: 0.85; }
+.play-btn:disabled { opacity: 0.3; cursor: default; background: rgba(255,255,255,0.1); }
+.play-btn svg { width: 8px; height: 8px; fill: #fff; margin-left: 1px; }
+.audio-bar { flex: 1; height: 2px; background: rgba(255,255,255,0.1); border-radius: 1px; cursor: pointer; }
+.audio-bar-fill { height: 100%; background: #e84020; border-radius: 1px; width: 0%; transition: width 0.1s; }
+.audio-time { font-size: 10px; color: rgba(255,255,255,0.28); white-space: nowrap; }
+
+/* THINKING */
+.thinking { display: flex; gap: 12px; align-items: flex-start; }
+.thinking-av { width: 30px; height: 30px; border-radius: 50%; background: #000; padding: 5px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
+.thinking-av img { width: 100%; height: 100%; object-fit: contain; }
+.dots { display: flex; gap: 4px; padding-top: 10px; }
+.dots span { width: 6px; height: 6px; background: #e84020; border-radius: 50%; animation: pulse 1.4s infinite; opacity: 0.3; }
+.dots span:nth-child(2) { animation-delay: 0.2s; }
+.dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes pulse { 0%,80%,100%{opacity:0.2;transform:scale(0.8);} 40%{opacity:1;transform:scale(1);} }
+
+/* STATUS */
+#statusBar {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.25); text-align: center;
+  padding: 4px 28px; min-height: 24px; flex-shrink: 0;
+}
+#statusBar.error { color: #e84020; }
+
+/* INPUT */
+.input-area {
+  padding: 12px 20px 18px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+.input-box {
+  display: flex; align-items: flex-end;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  background: #252525;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.input-box:focus-within { border-color: rgba(232,64,32,0.5); }
+textarea {
+  flex: 1; border: none; background: none;
+  color: #e8e8e8; font-family: 'Inter', sans-serif;
+  font-size: 14px; padding: 12px 16px;
+  outline: none; resize: none;
+  min-height: 46px; max-height: 140px; line-height: 1.5;
+}
+textarea::placeholder { color: rgba(255,255,255,0.2); }
+.send-btn {
+  width: 34px; height: 34px; margin: 6px;
+  border-radius: 8px; background: #e84020;
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity 0.2s; flex-shrink: 0;
+}
+.send-btn:hover { opacity: 0.85; }
+.send-btn:disabled { opacity: 0.3; cursor: default; }
+.send-btn svg { width: 14px; height: 14px; }
+.hint { font-size: 11px; color: rgba(255,255,255,0.15); text-align: center; margin-top: 8px; }
 </style>
 </head>
 <body>
-<div class="app">
-  <div class="top-bar">
+
+<div class="sidebar">
+  <div class="sidebar-top">
     <div class="logo-img">
       <img src="https://static.tildacdn.com/tild3366-3263-4664-a332-643535653666/Logotip.svg" alt="Путь Игры">
     </div>
-    <div class="logo-text">ПУТЬ <span>ИГРЫ</span></div>
-    <div class="tagline">Голос философии · Зритель · Актёр · Роль</div>
+    <div class="logo-name">ПУТЬ <span>ИГРЫ</span></div>
+    <div class="logo-sub">Голос философии</div>
+  </div>
+
+  <button class="new-chat-btn" onclick="newChat()">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+      <path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+    </svg>
+    Новый разговор
+  </button>
+
+  <div class="sidebar-section">
+    <div class="section-label">История</div>
+    <div id="historyList"></div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="section-label">Философия</div>
+    <button class="nav-item" onclick="askQuestion('Что такое три уровня Театра Реальности?')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="rgba(255,255,255,0.25)" stroke-width="1.2"/><circle cx="8" cy="8" r="2" fill="rgba(232,64,32,0.6)"/></svg>
+      <span class="nav-label">Три уровня</span>
+    </button>
+    <button class="nav-item" onclick="askQuestion('Что такое Самоосвобождающаяся Игра?')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M8 2l1.8 3.6L14 6.2l-3 2.9.7 4.1L8 11.1l-3.7 2 .7-4.1-3-2.9 4.2-.6z" stroke="rgba(255,255,255,0.25)" stroke-width="1.2" stroke-linejoin="round"/></svg>
+      <span class="nav-label">Самоосвобождение</span>
+    </button>
+    <button class="nav-item" onclick="askQuestion('Кто такой Повелитель Игры?')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M8 2v4M8 10v4M2 8h4M10 8h4" stroke="rgba(255,255,255,0.25)" stroke-width="1.2" stroke-linecap="round"/></svg>
+      <span class="nav-label">Повелитель Игры</span>
+    </button>
+    <button class="nav-item" onclick="askQuestion('Что такое Театр Реальности?')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="4" width="12" height="8" rx="1.5" stroke="rgba(255,255,255,0.25)" stroke-width="1.2"/><path d="M6 4V3M10 4V3" stroke="rgba(255,255,255,0.25)" stroke-width="1.2" stroke-linecap="round"/></svg>
+      <span class="nav-label">Театр реальности</span>
+    </button>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="voice-row voice-toggle" id="voiceToggle" onclick="toggleVoice()">
+      <span class="voice-label">Голос Демчога</span>
+      <div class="toggle-sw"></div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="main-header">
+    <div>
+      <div class="chat-title">Голос Пути Игры</div>
+      <div class="chat-sub">Зритель · Актёр · Роль</div>
+    </div>
   </div>
 
   <div id="messages"></div>
   <div id="statusBar"></div>
 
   <div class="input-area">
-    <div class="voice-row">
-      <label class="voice-toggle" id="voiceToggle" onclick="toggleVoice()">
-        <div class="toggle-sw"></div>
-        <span class="voice-label">Голос Демчога</span>
-      </label>
-    </div>
     <div class="input-box">
       <textarea id="inp" placeholder="Задай свой вопрос..." onkeydown="onKey(event)" oninput="grow(this)"></textarea>
       <button class="send-btn" id="sendBtn" onclick="send()">
-        <svg viewBox="0 0 14 14" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"><path d="M7 1l6 6-6 6M1 7h12"/></svg>
+        <svg viewBox="0 0 14 14" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round">
+          <path d="M7 1l6 6-6 6M1 7h12"/>
+        </svg>
       </button>
     </div>
     <p class="hint">Enter — отправить · Shift+Enter — новая строка</p>
   </div>
 </div>
+
 <script>
-  let voiceOn=false,busy=false,history=[],activeAudio=null;
-  const LOGO='https://static.tildacdn.com/tild3366-3263-4664-a332-643535653666/Logotip.svg';
+const LOGO = 'https://static.tildacdn.com/tild3366-3263-4664-a332-643535653666/Logotip.svg';
+let voiceOn = false;
+let busy = false;
+let history = [];
+let activeAudio = null;
+let chatSessions = [];
+let currentTitle = null;
 
-  function toggleVoice(){voiceOn=!voiceOn;document.getElementById('voiceToggle').classList.toggle('on',voiceOn);}
-  function status(msg,cls=''){const el=document.getElementById('statusBar');el.textContent=msg;el.className=cls;}
-  function grow(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,140)+'px';}
-  function onKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
+function toggleVoice() {
+  voiceOn = !voiceOn;
+  document.getElementById('voiceToggle').classList.toggle('on', voiceOn);
+}
 
-  function addMsg(role,text){
-    const wrap=document.getElementById('messages');
-    const group=document.createElement('div');group.className='msg-group';
-    const avatarHtml=role==='user'?'<div class="avatar user">ТЫ</div>':'<div class="avatar ai"><img src="'+LOGO+'" alt="ПИ"></div>';
-    const row=document.createElement('div');row.className='msg-row'+(role==='user'?' user':'');
-    row.innerHTML=avatarHtml+'<div class="bubble '+role+'">'+text.replace(/\n/g,'<br>')+'</div>';
-    group.appendChild(row);wrap.appendChild(group);wrap.scrollTop=wrap.scrollHeight;return group;
+function status(msg, cls) {
+  const el = document.getElementById('statusBar');
+  el.textContent = msg;
+  el.className = cls || '';
+}
+
+function grow(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+}
+
+function onKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+}
+
+function addMsg(role, text) {
+  const wrap = document.getElementById('messages');
+  const group = document.createElement('div');
+  group.className = 'msg-group';
+
+  const row = document.createElement('div');
+  row.className = 'msg-row' + (role === 'user' ? ' user' : '');
+
+  const av = document.createElement('div');
+  av.className = 'av ' + role;
+  if (role === 'ai') {
+    av.innerHTML = '<img src="' + LOGO + '" alt="ПИ">';
+  } else {
+    av.textContent = 'ТЫ';
   }
 
-  function thinking(){
-    const wrap=document.getElementById('messages');
-    const div=document.createElement('div');div.id='thinking';div.className='thinking';
-    div.innerHTML='<div class="thinking-avatar"><img src="'+LOGO+'" alt="ПИ"></div><div class="thinking-dots"><span></span><span></span><span></span></div>';
-    wrap.appendChild(div);wrap.scrollTop=wrap.scrollHeight;
-  }
-  function stopThinking(){const el=document.getElementById('thinking');if(el)el.remove();}
+  const bub = document.createElement('div');
+  bub.className = 'bub ' + role;
+  bub.innerHTML = text.replace(/\n/g, '<br>');
 
-  async function playVoice(text,group){
-    const pill=document.createElement('div');pill.className='audio-pill';
-    const playIcon='<svg viewBox="0 0 10 10" fill="#fff"><path d="M2 1.5l7 3.5-7 3.5z"/></svg>';
-    const pauseIcon='<svg viewBox="0 0 10 10" fill="#fff"><path d="M2 1h2v8H2zm4 0h2v8H6z"/></svg>';
-    pill.innerHTML='<button class="play-btn" disabled>'+playIcon+'</button><div class="audio-bar"><div class="audio-bar-fill"></div></div><span class="audio-label">Синтез…</span>';
-    group.appendChild(pill);
-    try{
-      const res=await fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
-      if(!res.ok)throw new Error(await res.text());
-      const blob=await res.blob();const url=URL.createObjectURL(blob);const audio=new Audio(url);
-      const btn=pill.querySelector('.play-btn');const fill=pill.querySelector('.audio-bar-fill');const lbl=pill.querySelector('.audio-label');
-      btn.disabled=false;lbl.textContent='Готово';
-      btn.onclick=()=>{
-        if(activeAudio&&activeAudio!==audio)activeAudio.pause();
-        if(audio.paused){audio.play();btn.innerHTML=pauseIcon;activeAudio=audio;}
-        else{audio.pause();btn.innerHTML=playIcon;}
-      };
-      audio.ontimeupdate=()=>{fill.style.width=(audio.currentTime/audio.duration*100)+'%';};
-      audio.onended=()=>{btn.innerHTML=playIcon;fill.style.width='0%';};
-      audio.play();btn.innerHTML=pauseIcon;activeAudio=audio;
-    }catch(e){pill.querySelector('.audio-label').textContent='Ошибка';console.error(e);}
-  }
+  row.appendChild(av);
+  row.appendChild(bub);
+  group.appendChild(row);
+  wrap.appendChild(group);
+  wrap.scrollTop = wrap.scrollHeight;
+  return group;
+}
 
-  async function send(){
-    if(busy)return;
-    const inp=document.getElementById('inp');
-    const text=inp.value.trim();if(!text)return;
-    busy=true;document.getElementById('sendBtn').disabled=true;
-    inp.value='';inp.style.height='auto';
-    addMsg('user',text);history.push({role:'user',content:text});
-    thinking();status('Голос Пути Игры думает…');
-    try{
-      const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history})});
-      if(!res.ok)throw new Error(await res.text());
-      const data=await res.json();const reply=data.reply;
-      history.push({role:'assistant',content:reply});
-      stopThinking();const group=addMsg('ai',reply);status('');
-      if(voiceOn){status('Синтез голоса…');await playVoice(reply,group);status('');}
-    }catch(e){stopThinking();status('Ошибка: '+e.message,'error');}
-    finally{busy=false;document.getElementById('sendBtn').disabled=false;inp.focus();}
+function showThinking() {
+  const wrap = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.id = 'thinking';
+  div.className = 'thinking';
+  div.innerHTML = '<div class="thinking-av"><img src="' + LOGO + '" alt="ПИ"></div><div class="dots"><span></span><span></span><span></span></div>';
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function hideThinking() {
+  const el = document.getElementById('thinking');
+  if (el) el.remove();
+}
+
+async function playVoice(text, group) {
+  const pill = document.createElement('div');
+  pill.className = 'audio-pill';
+  const PLAY = '<svg viewBox="0 0 10 10"><path d="M2 1.5l7 3.5-7 3.5z"/></svg>';
+  const PAUSE = '<svg viewBox="0 0 10 10"><path d="M2 1h2v8H2zm4 0h2v8H6z" fill="#fff"/></svg>';
+  pill.innerHTML = '<button class="play-btn" disabled>' + PLAY + '</button><div class="audio-bar"><div class="audio-bar-fill"></div></div><span class="audio-time">Синтез…</span>';
+  group.appendChild(pill);
+
+  try {
+    const res = await fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    if (!res.ok) throw new Error(await res.text());
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    const btn = pill.querySelector('.play-btn');
+    const fill = pill.querySelector('.audio-bar-fill');
+    const time = pill.querySelector('.audio-time');
+
+    btn.disabled = false;
+    btn.innerHTML = PLAY;
+    time.textContent = '0:00';
+
+    btn.onclick = () => {
+      if (activeAudio && activeAudio !== audio) { activeAudio.pause(); }
+      if (audio.paused) { audio.play(); btn.innerHTML = PAUSE; activeAudio = audio; }
+      else { audio.pause(); btn.innerHTML = PLAY; }
+    };
+
+    audio.ontimeupdate = () => {
+      if (audio.duration) {
+        fill.style.width = (audio.currentTime / audio.duration * 100) + '%';
+        const s = Math.floor(audio.currentTime);
+        time.textContent = '0:' + String(s).padStart(2, '0');
+      }
+    };
+    audio.onended = () => { btn.innerHTML = PLAY; fill.style.width = '0%'; };
+
+    audio.play();
+    btn.innerHTML = PAUSE;
+    activeAudio = audio;
+  } catch (e) {
+    pill.querySelector('.audio-time').textContent = 'Ошибка';
+    console.error(e);
   }
+}
+
+function updateHistory(userText) {
+  if (!currentTitle) {
+    currentTitle = userText.length > 28 ? userText.slice(0, 28) + '…' : userText;
+    const list = document.getElementById('historyList');
+    const item = document.createElement('button');
+    item.className = 'nav-item active';
+    item.innerHTML = '<svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 3h12v8H9l-3 2v-2H2z" stroke="#e84020" stroke-width="1.2" stroke-linejoin="round"/></svg><span class="nav-label">' + currentTitle + '</span>';
+    list.prepend(item);
+  }
+}
+
+function newChat() {
+  history = [];
+  currentTitle = null;
+  if (activeAudio) { activeAudio.pause(); activeAudio = null; }
+  document.getElementById('messages').innerHTML = '';
+  document.getElementById('inp').focus();
+}
+
+function askQuestion(q) {
+  document.getElementById('inp').value = q;
+  send();
+}
+
+async function send() {
+  if (busy) return;
+  const inp = document.getElementById('inp');
+  const text = inp.value.trim();
+  if (!text) return;
+
+  busy = true;
+  document.getElementById('sendBtn').disabled = true;
+  inp.value = '';
+  inp.style.height = 'auto';
+
+  addMsg('user', text);
+  history.push({ role: 'user', content: text });
+  updateHistory(text);
+
+  showThinking();
+  status('Голос Пути Игры думает…');
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: history })
+    });
+    if (!res.ok) throw new Error(await res.text());
+
+    const data = await res.json();
+    const reply = data.reply;
+    history.push({ role: 'assistant', content: reply });
+
+    hideThinking();
+    const group = addMsg('ai', reply);
+    status('');
+
+    if (voiceOn) {
+      status('Синтез голоса…');
+      await playVoice(reply, group);
+      status('');
+    }
+  } catch (e) {
+    hideThinking();
+    status('Ошибка: ' + e.message, 'error');
+  } finally {
+    busy = false;
+    document.getElementById('sendBtn').disabled = false;
+    inp.focus();
+  }
+}
 </script>
 </body>
 </html>"""
