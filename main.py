@@ -69,79 +69,111 @@ HTML = """<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Путь Игры — Голос</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Raleway:wght@200;300;400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#0a0a0f;--surface:#111118;--border:rgba(180,150,100,0.15);--gold:#c9a96e;--gold-dim:rgba(201,169,110,0.4);--gold-glow:rgba(201,169,110,0.08);--text:#e8e0d0;--text-dim:rgba(232,224,208,0.45);}
+  :root{--bg:#ffffff;--surface:#f5f5f5;--border:#e0e0e0;--accent:#ff3c00;--accent2:#1a1a1a;--text:#1a1a1a;--text-dim:#888888;--tag-bg:#f0f0f0;}
   *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--bg);color:var(--text);font-family:'Raleway',sans-serif;font-weight:300;min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;}
-  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 20% 50%,rgba(201,169,110,0.04) 0%,transparent 70%),radial-gradient(ellipse 40% 60% at 80% 30%,rgba(120,80,180,0.03) 0%,transparent 70%);pointer-events:none;z-index:0;}
-  header{width:100%;max-width:760px;padding:48px 32px 32px;text-align:center;position:relative;z-index:1;}
-  .logo-line{display:flex;align-items:center;justify-content:center;gap:20px;margin-bottom:12px;}
-  .logo-line::before{content:'';flex:1;height:1px;background:linear-gradient(to right,transparent,var(--gold-dim));}
-  .logo-line::after{content:'';flex:1;height:1px;background:linear-gradient(to left,transparent,var(--gold-dim));}
-  h1{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:clamp(28px,5vw,42px);letter-spacing:0.15em;margin-bottom:8px;}
-  h1 span{color:var(--gold);font-style:italic;}
-  .subtitle{font-size:11px;letter-spacing:0.35em;text-transform:uppercase;color:var(--text-dim);}
-  .chat-wrap{width:100%;max-width:760px;padding:0 32px;flex:1;display:flex;flex-direction:column;position:relative;z-index:1;}
-  #messages{flex:1;min-height:300px;max-height:58vh;overflow-y:auto;padding:8px 0;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-weight:400;min-height:100vh;display:flex;flex-direction:column;}
+
+  /* HEADER */
+  header{background:#1a1a1a;padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;}
+  .logo{font-family:'Unbounded',sans-serif;font-weight:900;font-size:16px;color:#fff;letter-spacing:-0.02em;}
+  .logo span{color:var(--accent);}
+  .header-tag{background:var(--accent);color:#fff;font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;padding:4px 10px;border-radius:2px;letter-spacing:0.05em;}
+
+  /* HERO */
+  .hero{background:#1a1a1a;padding:60px 40px 50px;position:relative;overflow:hidden;}
+  .hero::before{content:'ИГРА';position:absolute;right:-20px;top:50%;transform:translateY(-50%);font-family:'Unbounded',sans-serif;font-weight:900;font-size:180px;color:rgba(255,255,255,0.03);line-height:1;pointer-events:none;}
+  .hero-tag{display:inline-block;background:var(--accent);color:#fff;font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;padding:5px 12px;border-radius:2px;letter-spacing:0.1em;margin-bottom:20px;}
+  .hero h1{font-family:'Unbounded',sans-serif;font-weight:900;font-size:clamp(32px,6vw,64px);color:#fff;line-height:1.05;letter-spacing:-0.03em;margin-bottom:16px;}
+  .hero h1 em{color:var(--accent);font-style:normal;}
+  .hero p{color:rgba(255,255,255,0.5);font-size:15px;font-weight:300;max-width:480px;line-height:1.6;}
+
+  /* CHAT AREA */
+  .chat-wrap{flex:1;max-width:900px;width:100%;margin:0 auto;padding:0 40px;display:flex;flex-direction:column;}
+
+  #messages{flex:1;min-height:280px;max-height:52vh;overflow-y:auto;padding:24px 0 8px;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
   #messages::-webkit-scrollbar{width:3px;}
   #messages::-webkit-scrollbar-thumb{background:var(--border);}
-  .msg{display:flex;gap:16px;padding:20px 0;border-bottom:1px solid rgba(255,255,255,0.03);animation:fadeIn 0.4s ease;}
-  @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-  .msg-avatar{width:28px;height:28px;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:2px;}
-  .msg.user .msg-avatar{color:var(--text-dim);border:1px solid var(--border);border-radius:50%;font-size:10px;letter-spacing:0.05em;}
-  .msg.ai .msg-avatar{color:var(--gold);font-size:16px;}
-  .msg-content{flex:1;line-height:1.85;}
-  .msg.user .msg-content{color:var(--text-dim);font-size:14px;}
-  .msg.ai .msg-content{color:var(--text);font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:300;}
-  .audio-row{display:flex;align-items:center;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.04);}
-  .play-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--gold-dim);background:var(--gold-glow);color:var(--gold);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;font-size:12px;}
-  .play-btn:hover{background:rgba(201,169,110,0.15);}
-  .play-btn:disabled{opacity:0.35;cursor:default;}
-  .audio-bar{flex:1;height:2px;background:var(--border);border-radius:1px;}
-  .audio-bar-fill{height:100%;background:var(--gold);border-radius:1px;width:0%;transition:width 0.1s;}
-  .audio-label{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);min-width:55px;}
-  .thinking{display:flex;gap:16px;padding:20px 0;align-items:flex-start;}
-  .thinking-dots{display:flex;gap:5px;padding-top:8px;}
-  .thinking-dots span{width:5px;height:5px;background:var(--gold-dim);border-radius:50%;animation:pulse 1.4s infinite;}
+
+  .msg{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid var(--border);animation:fadeIn 0.3s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  .msg-avatar{width:32px;height:32px;flex-shrink:0;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;margin-top:2px;}
+  .msg.user .msg-avatar{background:var(--tag-bg);color:var(--text-dim);}
+  .msg.ai .msg-avatar{background:var(--accent);color:#fff;}
+
+  .msg-content{flex:1;line-height:1.75;font-size:15px;}
+  .msg.user .msg-content{color:var(--text-dim);}
+  .msg.ai .msg-content{color:var(--text);font-weight:400;}
+
+  /* Audio */
+  .audio-row{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+  .play-btn{width:32px;height:32px;border-radius:4px;border:none;background:var(--accent);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity 0.2s;font-size:12px;}
+  .play-btn:hover{opacity:0.85;}
+  .play-btn:disabled{opacity:0.3;cursor:default;background:var(--tag-bg);color:var(--text-dim);}
+  .audio-bar{flex:1;height:3px;background:var(--border);border-radius:2px;cursor:pointer;}
+  .audio-bar-fill{height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width 0.1s;}
+  .audio-label{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);min-width:55px;font-weight:500;}
+
+  /* Thinking */
+  .thinking{display:flex;gap:14px;padding:16px 0;align-items:flex-start;}
+  .thinking-avatar{width:32px;height:32px;border-radius:4px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;}
+  .thinking-dots{display:flex;gap:5px;padding-top:10px;}
+  .thinking-dots span{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:pulse 1.4s infinite;opacity:0.3;}
   .thinking-dots span:nth-child(2){animation-delay:0.2s;}
   .thinking-dots span:nth-child(3){animation-delay:0.4s;}
   @keyframes pulse{0%,80%,100%{opacity:0.2;transform:scale(0.8);}40%{opacity:1;transform:scale(1);}}
-  .input-area{padding:20px 0 40px;position:relative;}
-  .voice-toggle{display:flex;align-items:center;gap:8px;position:absolute;right:0;top:20px;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);cursor:pointer;user-select:none;transition:color 0.2s;}
-  .toggle-sw{width:32px;height:18px;background:var(--border);border-radius:9px;position:relative;transition:background 0.3s;}
-  .toggle-sw::after{content:'';position:absolute;width:12px;height:12px;background:var(--text-dim);border-radius:50%;top:3px;left:3px;transition:all 0.3s;}
-  .voice-toggle.on{color:var(--gold);}
-  .voice-toggle.on .toggle-sw{background:var(--gold-dim);}
-  .voice-toggle.on .toggle-sw::after{left:17px;background:var(--gold);}
-  .input-wrap{display:flex;border:1px solid var(--border);background:var(--surface);transition:border-color 0.3s;}
-  .input-wrap:focus-within{border-color:var(--gold-dim);}
-  textarea{flex:1;background:none;border:none;color:var(--text);font-family:'Raleway',sans-serif;font-size:14px;font-weight:300;padding:16px 20px;outline:none;resize:none;min-height:54px;max-height:140px;line-height:1.6;}
+
+  /* Input */
+  .input-section{padding:20px 0 36px;border-top:2px solid var(--text);}
+  .input-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .input-label{font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700;color:var(--text);letter-spacing:0.05em;text-transform:uppercase;}
+  .voice-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-size:11px;font-weight:500;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.05em;transition:color 0.2s;}
+  .toggle-sw{width:36px;height:20px;background:var(--border);border-radius:10px;position:relative;transition:background 0.3s;}
+  .toggle-sw::after{content:'';position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:3px;left:3px;transition:all 0.3s;box-shadow:0 1px 3px rgba(0,0,0,0.2);}
+  .voice-toggle.on{color:var(--accent);}
+  .voice-toggle.on .toggle-sw{background:var(--accent);}
+  .voice-toggle.on .toggle-sw::after{left:19px;}
+  .input-wrap{display:flex;border:2px solid var(--text);background:#fff;transition:border-color 0.2s;}
+  .input-wrap:focus-within{border-color:var(--accent);}
+  textarea{flex:1;background:none;border:none;color:var(--text);font-family:'Inter',sans-serif;font-size:15px;font-weight:400;padding:16px 20px;outline:none;resize:none;min-height:58px;max-height:140px;line-height:1.5;}
   textarea::placeholder{color:var(--text-dim);}
-  .send-btn{width:54px;background:none;border:none;border-left:1px solid var(--border);color:var(--gold-dim);cursor:pointer;font-size:18px;transition:all 0.2s;display:flex;align-items:center;justify-content:center;}
-  .send-btn:hover{color:var(--gold);background:var(--gold-glow);}
+  .send-btn{width:58px;background:var(--text);border:none;color:#fff;cursor:pointer;font-size:20px;transition:background 0.2s;display:flex;align-items:center;justify-content:center;}
+  .send-btn:hover{background:var(--accent);}
   .send-btn:disabled{opacity:0.3;cursor:default;}
-  .hint{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);text-align:center;margin-top:12px;opacity:0.6;}
-  #statusBar{font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);text-align:center;padding:6px;min-height:26px;}
-  #statusBar.error{color:#c06060;}
-  #statusBar.ok{color:var(--gold);}
+  .hint{font-size:11px;color:var(--text-dim);text-align:center;margin-top:10px;font-weight:400;}
+
+  #statusBar{font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);text-align:center;padding:6px;min-height:26px;font-weight:500;}
+  #statusBar.error{color:var(--accent);}
+  #statusBar.ok{color:#00a86b;}
 </style>
 </head>
 <body>
+
 <header>
-  <div class="logo-line"><span style="color:var(--gold);font-size:20px">◉</span></div>
-  <p class="subtitle">Философия присутствия</p>
-  <h1>Путь <span>Игры</span></h1>
+  <div class="logo">ПУТЬ <span>ИГРЫ</span></div>
+  <div class="header-tag">AI · ГОЛОС</div>
 </header>
+
+<div class="hero">
+  <div class="hero-tag">ФИЛОСОФИЯ ПРИСУТСТВИЯ</div>
+  <h1>Задай вопрос<br><em>Голосу Игры</em></h1>
+  <p>Пространство, где Зритель, Актёр и Роль сливаются в одно. Спроси о чём угодно — ответ придёт через призму Пути.</p>
+</div>
+
 <div class="chat-wrap">
   <div id="messages"></div>
   <div id="statusBar"></div>
-  <div class="input-area">
-    <label class="voice-toggle" id="voiceToggle" onclick="toggleVoice()">
-      <div class="toggle-sw"></div>Голос
-    </label>
+  <div class="input-section">
+    <div class="input-top">
+      <div class="input-label">Твой вопрос</div>
+      <label class="voice-toggle" id="voiceToggle" onclick="toggleVoice()">
+        <div class="toggle-sw"></div>Голос Демчога
+      </label>
+    </div>
     <div class="input-wrap">
-      <textarea id="inp" placeholder="Задай свой вопрос..." onkeydown="onKey(event)" oninput="grow(this)"></textarea>
+      <textarea id="inp" placeholder="Что тебя беспокоит? Что ты ищешь?" onkeydown="onKey(event)" oninput="grow(this)"></textarea>
       <button class="send-btn" id="sendBtn" onclick="send()">↑</button>
     </div>
     <p class="hint">Enter — отправить · Shift+Enter — новая строка</p>
@@ -157,14 +189,14 @@ HTML = """<!DOCTYPE html>
     const wrap=document.getElementById('messages');
     const div=document.createElement('div');
     div.className='msg '+role;
-    div.innerHTML='<div class="msg-avatar">'+(role==='user'?'Я':'◉')+'</div><div class="msg-content">'+text.replace(/\\n/g,'<br>')+'</div>';
+    div.innerHTML='<div class="msg-avatar">'+(role==='user'?'ТЫ':'ПИ')+'</div><div class="msg-content">'+text.replace(/\\n/g,'<br>')+'</div>';
     wrap.appendChild(div);wrap.scrollTop=wrap.scrollHeight;return div;
   }
   function thinking(){
     const wrap=document.getElementById('messages');
     const div=document.createElement('div');
     div.id='thinking';div.className='thinking';
-    div.innerHTML='<div class="msg-avatar" style="color:var(--gold);font-size:16px">◉</div><div class="thinking-dots"><span></span><span></span><span></span></div>';
+    div.innerHTML='<div class="thinking-avatar">ПИ</div><div class="thinking-dots"><span></span><span></span><span></span></div>';
     wrap.appendChild(div);wrap.scrollTop=wrap.scrollHeight;
   }
   function stopThinking(){const el=document.getElementById('thinking');if(el)el.remove();}
