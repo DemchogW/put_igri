@@ -487,7 +487,7 @@ textarea::placeholder { color: rgba(255,255,255,0.2); }
   <div class="input-area">
     <div class="input-box">
       <textarea id="inp" placeholder="Задай свой вопрос..." onkeydown="onKey(event)" oninput="grow(this)"></textarea>
-      <button class="send-btn" id="sendBtn" onclick="send()">
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()">
         <svg viewBox="0 0 14 14" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round">
           <path d="M7 1l6 6-6 6M1 7h12"/>
         </svg>
@@ -535,7 +535,7 @@ function grow(el) {
 }
 
 function onKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 }
 
 function addMsg(role, text) {
@@ -653,10 +653,10 @@ function newChat() {
 
 function askQuestion(q) {
   document.getElementById('inp').value = q;
-  send();
+  sendMessage();
 }
 
-async function send() {
+async function sendMessage() {
   if (busy) return;
   const inp = document.getElementById('inp');
   const text = inp.value.trim();
