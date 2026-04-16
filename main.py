@@ -314,9 +314,115 @@ textarea::placeholder { color: rgba(255,255,255,0.2); }
 .send-btn:disabled { opacity: 0.3; cursor: default; }
 .send-btn svg { width: 14px; height: 14px; }
 .hint { font-size: 11px; color: rgba(255,255,255,0.15); text-align: center; margin-top: 8px; }
+
+/* MOBILE HEADER */
+.mobile-header {
+  display: none;
+  background: #0f0f0f;
+  padding: 14px 16px;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+.mobile-logo { display: flex; align-items: center; gap: 10px; }
+.mobile-logo img { width: 32px; height: 32px; object-fit: contain; }
+.mobile-logo-name { font-size: 13px; font-weight: 500; color: #fff; letter-spacing: 0.1em; text-transform: uppercase; }
+.mobile-logo-name span { color: #e84020; }
+.mobile-menu-btn {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: rgba(255,255,255,0.06); border: none;
+  cursor: pointer; display: flex; align-items: center;
+  justify-content: center; color: rgba(255,255,255,0.6);
+}
+
+/* MOBILE DRAWER */
+.drawer-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 100;
+}
+.drawer-overlay.open { display: block; }
+.drawer {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 260px; background: #0f0f0f;
+  display: flex; flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+}
+.drawer-overlay.open .drawer { transform: translateX(0); }
+
+/* MOBILE RESPONSIVE */
+@media (max-width: 700px) {
+  body { flex-direction: column; }
+  .sidebar { display: none; }
+  .mobile-header { display: flex; }
+  .main { flex: 1; overflow: hidden; }
+  .main-header { display: none; }
+  #messages { padding: 16px; gap: 16px; }
+  .bub { max-width: 85%; font-size: 14px; }
+  .quote-block { margin-left: 36px; max-width: 85%; font-size: 13px; }
+  .audio-pill { margin-left: 36px; width: 180px; }
+  .input-area { padding: 10px 12px 14px; }
+  .hint { display: none; }
+}
 </style>
 </head>
 <body>
+
+<!-- MOBILE DRAWER OVERLAY -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer(event)">
+  <div class="drawer">
+    <div class="sidebar-top">
+      <div class="logo-img">
+        <img src="https://static.tildacdn.com/tild3366-3263-4664-a332-643535653666/Logotip.svg" alt="Путь Игры">
+      </div>
+      <div class="logo-name">ПУТЬ <span>ИГРЫ</span></div>
+      <div class="logo-sub">Голос философии</div>
+    </div>
+    <button class="new-chat-btn" onclick="newChat();closeDrawer()">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      Новый разговор
+    </button>
+    <div class="sidebar-section">
+      <div class="section-label">Философия</div>
+      <button class="nav-item" onclick="askQuestion('Что такое три уровня Театра Реальности?');closeDrawer()">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="rgba(255,255,255,0.25)" stroke-width="1.2"/><circle cx="8" cy="8" r="2" fill="rgba(232,64,32,0.6)"/></svg>
+        <span class="nav-label">Три уровня</span>
+      </button>
+      <button class="nav-item" onclick="askQuestion('Что такое Самоосвобождающаяся Игра?');closeDrawer()">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M8 2l1.8 3.6L14 6.2l-3 2.9.7 4.1L8 11.1l-3.7 2 .7-4.1-3-2.9 4.2-.6z" stroke="rgba(255,255,255,0.25)" stroke-width="1.2" stroke-linejoin="round"/></svg>
+        <span class="nav-label">Самоосвобождение</span>
+      </button>
+      <button class="nav-item" onclick="askQuestion('Кто такой Повелитель Игры?');closeDrawer()">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M8 2v4M8 10v4M2 8h4M10 8h4" stroke="rgba(255,255,255,0.25)" stroke-width="1.2" stroke-linecap="round"/></svg>
+        <span class="nav-label">Повелитель Игры</span>
+      </button>
+    </div>
+    <div class="sidebar-bottom">
+      <div class="voice-row voice-toggle" id="voiceToggleMobile" onclick="toggleVoice()">
+        <span class="voice-label">Голос Демчога</span>
+        <div class="toggle-sw"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE TOP BAR -->
+<div class="mobile-header">
+  <div class="mobile-logo">
+    <img src="https://static.tildacdn.com/tild3366-3263-4664-a332-643535653666/Logotip.svg" alt="Путь Игры">
+    <span class="mobile-logo-name">ПУТЬ <span>ИГРЫ</span></span>
+  </div>
+  <button class="mobile-menu-btn" onclick="openDrawer()">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+    </svg>
+  </button>
+</div>
 
 <div class="sidebar">
   <div class="sidebar-top">
@@ -403,6 +509,18 @@ let currentTitle = null;
 function toggleVoice() {
   voiceOn = !voiceOn;
   document.getElementById('voiceToggle').classList.toggle('on', voiceOn);
+  const mob = document.getElementById('voiceToggleMobile');
+  if (mob) mob.classList.toggle('on', voiceOn);
+}
+
+function openDrawer() {
+  document.getElementById('drawerOverlay').classList.add('open');
+}
+
+function closeDrawer(e) {
+  if (!e || e.target === document.getElementById('drawerOverlay')) {
+    document.getElementById('drawerOverlay').classList.remove('open');
+  }
 }
 
 function status(msg, cls) {
